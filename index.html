@@ -299,19 +299,28 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
 
   // Apps Script는 application/json 요청에 대해 CORS 사전요청(OPTIONS)을 처리하지 못하므로,
   // Content-Type을 지정하지 않은 text/plain 본문으로 보내 사전요청 자체가 발생하지 않게 한다.
+  // Apps Script는 응답이 느릴 때가 있어서, 너무 오래 걸리면 그냥 실패로 처리하고 다시 시도할 수 있게 시간 제한을 둔다.
   function callApi(action, data) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
     return fetch(API_URL, {
       method: 'POST',
-      body: JSON.stringify(Object.assign({ action: action }, data))
+      body: JSON.stringify(Object.assign({ action: action }, data)),
+      signal: controller.signal
     })
       .then(r => r.json())
       .then(res => {
         if (!res.ok) throw new Error(res.error || '오류가 발생했습니다');
         return res.result;
-      });
+      })
+      .catch(err => {
+        if (err.name === 'AbortError') throw new Error('응답이 너무 오래 걸려요. 다시 눌러주세요');
+        throw err;
+      })
+      .finally(() => clearTimeout(timeoutId));
   }
 
-  function submitEntry(payload, cb) {
+  function submitEntry(payload, cb, errCb) {
     if (useMock) {
       const rows = mockStore();
       rows.push(Object.assign({ time: new Date().toLocaleTimeString() }, payload));
@@ -319,7 +328,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
       cb(mockSummary());
       return;
     }
-    callApi('submitEntry', { payload: payload }).then(cb).catch(onError);
+    callApi('submitEntry', { payload: payload }).then(cb).catch(errCb || onError);
   }
   function fetchSummary(cb) {
     if (!SIDE) { cb({ count: 0, total: 0, meals: 0 }); return; }
@@ -405,21 +414,25 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
     validate();
   });
 
-  document.getElementById('methodGrid').addEventListener('click', e => {
-    const t = e.target.closest('.btn');
-    if (!t) return;
-    method = t.dataset.method;
-    selectIn($('methodGrid'), t, 'selected');
-    const isTransfer = method === '계좌이체';
+  function setMethod(value, tileEl) {
+    method = value;
+    selectIn($('methodGrid'), tileEl, 'selected');
+    const isTransfer = value === '계좌이체';
     depositorWrap.style.display = isTransfer ? 'block' : 'none';
     transferTile.classList.toggle('show', isTransfer);
     if (isTransfer) {
       setAmount('transfer', transferTile);
-      depositorInput.focus();
     } else if (amount === 'transfer') {
       setAmount(100000, document.querySelector('#amountGrid [data-amount="100000"]'));
     }
     validate();
+  }
+
+  document.getElementById('methodGrid').addEventListener('click', e => {
+    const t = e.target.closest('.btn');
+    if (!t) return;
+    setMethod(t.dataset.method, t);
+    if (t.dataset.method === '계좌이체') depositorInput.focus();
   });
 
   document.getElementById('mealGrid').addEventListener('click', e => {
@@ -439,15 +452,14 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   function resetForm() {
     nameEl.value = '';
     relationEl.value = '';
-    method = null;
     mealCount = null;
     depositorInput.value = '';
     depositorWrap.style.display = 'none';
     transferTile.classList.remove('show');
     manualInput.value = '';
-    selectIn($('methodGrid'), null, 'selected');
     selectIn($('mealGrid'), null, 'selected');
     setAmount(100000, document.querySelector('#amountGrid [data-amount="100000"]'));
+    setMethod('현금', document.querySelector('#methodGrid [data-method="현금"]'));
     setMealDefault();
     submitBtn.disabled = true;
     nameEl.focus();
@@ -461,6 +473,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   submitBtn.addEventListener('click', () => {
     if (submitBtn.disabled) return;
     submitBtn.disabled = true;
+    submitBtn.textContent = '저장 중...';
     const payload = {
       side: SIDE,
       name: nameEl.value.trim(),
@@ -472,10 +485,15 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
       receiver: receiverEl.value.trim()
     };
     submitEntry(payload, summary => {
+      submitBtn.textContent = '접수 완료';
       const amountText = payload.amount ? payload.amount.toLocaleString() + '원' : '금액 미확인';
       showToast(payload.name + '님 ' + amountText + ' 접수완료 (' + payload.method + ')');
       applySummary(summary);
       resetForm();
+    }, err => {
+      submitBtn.textContent = '접수 완료';
+      submitBtn.disabled = false;
+      onError(err);
     });
   });
 
@@ -513,6 +531,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
 
   if (SIDE) applySide(SIDE);
   setAmount(100000, document.querySelector('#amountGrid [data-amount="100000"]'));
+  setMethod('현금', document.querySelector('#methodGrid [data-method="현금"]'));
   setMealDefault();
   fetchSummary(applySummary);
   nameEl.focus();
