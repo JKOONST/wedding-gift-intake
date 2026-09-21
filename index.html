@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>축의금 접수</title>
+<style>
+  :root{
+    --junhyuk:#2f6fed;
+    --eunsu:#e0578c;
+    --accent:#6b7280;
+    --bg:#f4f5f7;
+    --card:#ffffff;
+    --text:#1c1f26;
+    --muted:#8a8f98;
+    --border:#e3e5e9;
+    --good:#1fa855;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding-bottom:32px;
+  }
+  header{
+    background:var(--accent);
+    color:#fff;
+    padding:18px 16px 16px;
+    position:sticky;
+    top:0;
+    z-index:5;
+  }
+  header h1{margin:0;font-size:19px;}
+  header .staff{
+    margin-top:8px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    opacity:.95;
+  }
+  header .staff input{
+    flex:1;
+    border:none;
+    border-radius:8px;
+    padding:6px 10px;
+    font-size:13px;
+  }
+  main{padding:14px;max-width:520px;margin:0 auto;}
+  .card{
+    background:var(--card);
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:12px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04);
+  }
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600;}
+  input[type=text],input[type=number]{
+    width:100%;
+    padding:14px 12px;
+    font-size:18px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    background:#fff;
+  }
+  input:focus{outline:none;border-color:var(--accent);}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .grid.pay{grid-template-columns:repeat(2,1fr);}
+  .grid.meal{grid-template-columns:repeat(5,1fr);}
+  .btn{
+    padding:16px 4px;
+    border-radius:10px;
+    border:1.5px solid var(--border);
+    background:#fff;
+    font-size:16px;
+    font-weight:700;
+    color:var(--text);
+    text-align:center;
+    user-select:none;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .btn.small{padding:12px 4px;font-size:15px;}
+  .btn.selected{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  .btn.transfer{grid-column:span 3;margin-top:4px;background:#f7f7f9;display:none;}
+  .btn.transfer.show{display:block;}
+  .btn.transfer.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .btn.manual{grid-column:span 3;margin-top:4px;background:#f7f7f9;}
+  .btn.manual.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+  #manualAmountWrap{margin-top:8px;display:none;}
+  .btn.side{border-width:2px;}
+  .btn.side.selected{color:#fff;}
+  #depositorWrap{margin-top:10px;display:none;}
+  .submit{
+    width:100%;
+    padding:18px;
+    border:none;
+    border-radius:12px;
+    background:var(--good);
+    color:#fff;
+    font-size:19px;
+    font-weight:800;
+    margin-top:4px;
+  }
+  .submit:disabled{background:#c7cad1;}
+  .summary{
+    display:flex;
+    background:var(--card);
+    border-radius:16px;
+    overflow:hidden;
+    margin-bottom:12px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04);
+  }
+  .summary .stat{
+    flex:1;
+    padding:16px 8px 14px;
+    text-align:center;
+  }
+  .summary .stat + .stat{border-left:1px solid var(--border);}
+  .summary .stat .num{
+    display:block;
+    font-size:26px;
+    font-weight:800;
+    color:var(--accent);
+    line-height:1.15;
+    transition:color .2s;
+  }
+  .summary .stat .lbl{
+    display:block;
+    margin-top:3px;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.02em;
+    color:var(--muted);
+  }
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:24px;
+    transform:translateX(-50%);
+    background:#1c1f26;
+    color:#fff;
+    padding:12px 18px;
+    border-radius:10px;
+    font-size:14px;
+    opacity:0;
+    transition:opacity .2s;
+    pointer-events:none;
+    z-index:10;
+    max-width:90%;
+    text-align:center;
+  }
+  .toast.show{opacity:1;}
+  details{margin-top:4px;}
+  summary{font-size:14px;color:var(--accent);font-weight:700;padding:6px 0;}
+  .searchRow{display:flex;gap:8px;margin-top:8px;}
+  .searchRow input{flex:1;}
+  .searchRow button{
+    padding:0 16px;border-radius:10px;border:1.5px solid var(--border);background:#fff;font-weight:700;
+  }
+  .resultRow{
+    display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid var(--border);
+  }
+  .resultRow .r-name{font-weight:700;}
+  .resultRow .r-sub{color:var(--muted);}
+  .empty{color:var(--muted);font-size:13px;padding:6px 0;}
+  .apiWarn{background:#fff3cd;color:#7a5b00;font-size:12px;padding:8px 12px;text-align:center;display:none;}
+  .apiWarn.show{display:block;}
+</style>
+</head>
+<body>
+
+<div class="apiWarn" id="apiWarn">API_URL이 설정되지 않아 미리보기(로컬 저장) 모드로 동작 중입니다. 실제 배포 전 index.html 맨 아래 API_URL을 채워주세요.</div>
+
+<header>
+  <h1 id="title">축의금 접수 - 구분을 선택해주세요</h1>
+  <div class="staff">
+    접수자
+    <input id="receiver" type="text" placeholder="이름 입력 (한 번만 입력하면 기억함)">
+  </div>
+</header>
+
+<main>
+  <div class="summary">
+    <div class="stat"><span class="num" id="sumCount">0명</span><span class="lbl">접수 인원</span></div>
+    <div class="stat"><span class="num" id="sumMeals">0장</span><span class="lbl">식권 매수</span></div>
+  </div>
+
+  <div class="card">
+    <label>구분 (이 기기에서는 한 번만 선택하면 계속 기억됩니다)</label>
+    <div class="grid pay" id="sideGrid">
+      <div class="btn side" data-side="junhyuk" style="border-color:#2f6fed;">준혁측</div>
+      <div class="btn side" data-side="eunsu" style="border-color:#e0578c;">은수측</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <label>성함</label>
+    <input id="name" type="text" placeholder="하객 성함" autocomplete="off">
+  </div>
+
+  <div class="card">
+    <label>관계 / 소속</label>
+    <input id="relation" type="text" placeholder="예: 신랑 회사, 대학 동기 (선택)" autocomplete="off">
+  </div>
+
+  <div class="card">
+    <label>결제방법</label>
+    <div class="grid pay" id="methodGrid">
+      <div class="btn" data-method="현금">현금</div>
+      <div class="btn" data-method="계좌이체">계좌이체</div>
+    </div>
+    <div id="depositorWrap">
+      <input id="depositor" type="text" placeholder="입금자명 (통장 표시 이름이 다르면 입력)" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="card">
+    <label>금액</label>
+    <div class="grid" id="amountGrid">
+      <div class="btn" data-amount="50000">5만원</div>
+      <div class="btn" data-amount="100000">10만원</div>
+      <div class="btn" data-amount="150000">15만원</div>
+      <div class="btn" data-amount="200000">20만원</div>
+      <div class="btn" data-amount="250000">25만원</div>
+      <div class="btn" data-amount="300000">30만원</div>
+      <div class="btn manual" id="manualBtn">직접입력</div>
+      <div class="btn transfer" id="transferTile" data-amount="transfer">계좌이체 (금액 나중에 확인)</div>
+    </div>
+    <div id="manualAmountWrap">
+      <input id="manualAmount" type="number" inputmode="numeric" placeholder="금액 직접 입력 (원)">
+    </div>
+  </div>
+
+  <div class="card">
+    <label>식권 매수</label>
+    <div class="grid meal" id="mealGrid">
+      <div class="btn small" data-meal="0">0</div>
+      <div class="btn small" data-meal="1">1</div>
+      <div class="btn small" data-meal="2">2</div>
+      <div class="btn small" data-meal="3">3</div>
+      <div class="btn small" data-meal="4">4</div>
+    </div>
+  </div>
+
+  <button class="submit" id="submitBtn" disabled>접수 완료</button>
+
+  <details>
+    <summary>이름으로 조회 (계좌이체 확인용)</summary>
+    <div class="card" style="margin-top:8px;">
+      <div class="searchRow">
+        <input id="searchInput" type="text" placeholder="성함 입력">
+        <button id="searchBtn">검색</button>
+      </div>
+      <div id="searchResults"></div>
+    </div>
+  </details>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// 배포한 Apps Script 웹앱 주소(.../exec)를 여기에 붙여넣으세요. 비워두면 로컬 미리보기(mock) 모드로 동작합니다.
+const API_URL = '';
+</script>
+<script>
+(function(){
+  const SIDE_MAP = { junhyuk: { label: '준혁측', color: '#2f6fed' }, eunsu: { label: '은수측', color: '#e0578c' } };
+  const params = new URLSearchParams(location.search);
+  const urlSide = params.get('side');
+  let SIDE = (urlSide && SIDE_MAP[urlSide]) ? urlSide : (localStorage.getItem('wedding_side') || '');
+  if (!SIDE_MAP[SIDE]) SIDE = '';
+
+  const useMock = !API_URL;
+  if (useMock) document.getElementById('apiWarn').classList.add('show');
+
+  const $ = id => document.getElementById(id);
+
+  // ---- 데이터 계층: 실배포 시 Apps Script API를 fetch로 호출, 미설정 시 localStorage로 흉내낸다 ----
+  function mockStore() {
+    return JSON.parse(localStorage.getItem('mock_' + SIDE) || '[]');
+  }
+  function mockSave(rows) {
+    localStorage.setItem('mock_' + SIDE, JSON.stringify(rows));
+  }
+  function mockSummary() {
+    const rows = mockStore();
+    return {
+      count: rows.length,
+      total: rows.reduce((s, r) => s + Number(r.amount || 0), 0),
+      meals: rows.reduce((s, r) => s + Number(r.mealCount || 0), 0)
+    };
+  }
+
+  // Apps Script는 application/json 요청에 대해 CORS 사전요청(OPTIONS)을 처리하지 못하므로,
+  // Content-Type을 지정하지 않은 text/plain 본문으로 보내 사전요청 자체가 발생하지 않게 한다.
+  function callApi(action, data) {
+    return fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(Object.assign({ action: action }, data))
+    })
+      .then(r => r.json())
+      .then(res => {
+        if (!res.ok) throw new Error(res.error || '오류가 발생했습니다');
+        return res.result;
+      });
+  }
+
+  function submitEntry(payload, cb) {
+    if (useMock) {
+      const rows = mockStore();
+      rows.push(Object.assign({ time: new Date().toLocaleTimeString() }, payload));
+      mockSave(rows);
+      cb(mockSummary());
+      return;
+    }
+    callApi('submitEntry', { payload: payload }).then(cb).catch(onError);
+  }
+  function fetchSummary(cb) {
+    if (!SIDE) { cb({ count: 0, total: 0, meals: 0 }); return; }
+    if (useMock) { cb(mockSummary()); return; }
+    callApi('getSummary', { side: SIDE }).then(cb).catch(onError);
+  }
+  function search(keyword, cb) {
+    if (useMock) {
+      cb(mockStore().filter(r => (r.name || '').indexOf(keyword) !== -1).reverse());
+      return;
+    }
+    callApi('searchByName', { side: SIDE, keyword: keyword }).then(cb).catch(onError);
+  }
+  function onError(err) {
+    showToast('오류: ' + (err && err.message ? err.message : err));
+  }
+
+  // ---- side (준혁측/은수측) ----
+  function applySide(side) {
+    SIDE = side;
+    localStorage.setItem('wedding_side', side);
+    const info = SIDE_MAP[side];
+    document.title = '축의금 접수 - ' + info.label;
+    $('title').textContent = '축의금 접수 - ' + info.label;
+    document.documentElement.style.setProperty('--accent', info.color);
+    document.querySelectorAll('#sideGrid .btn').forEach(b => {
+      const on = b.dataset.side === side;
+      b.classList.toggle('selected', on);
+      b.style.background = on ? b.style.borderColor : '#fff';
+      b.style.color = on ? '#fff' : 'var(--text)';
+    });
+    receiverEl.value = localStorage.getItem('receiver_' + side) || '';
+    fetchSummary(applySummary);
+    validate();
+  }
+
+  $('sideGrid').addEventListener('click', e => {
+    const t = e.target.closest('.btn');
+    if (!t) return;
+    applySide(t.dataset.side);
+  });
+
+  // ---- state ----
+  let amount = null, method = null, mealCount = null;
+
+  const nameEl = $('name'), relationEl = $('relation'), receiverEl = $('receiver');
+  const depositorWrap = $('depositorWrap'), depositorInput = $('depositor');
+  const transferTile = $('transferTile');
+  const manualBtn = $('manualBtn'), manualWrap = $('manualAmountWrap'), manualInput = $('manualAmount');
+  const submitBtn = $('submitBtn');
+
+  receiverEl.addEventListener('input', () => localStorage.setItem('receiver_' + SIDE, receiverEl.value));
+
+  function selectIn(grid, selector, cls) {
+    grid.querySelectorAll('.btn').forEach(b => b.classList.remove(cls));
+    if (selector) selector.classList.add(cls);
+  }
+
+  function setAmount(value, tileEl) {
+    amount = value;
+    selectIn($('amountGrid'), tileEl, 'selected');
+    manualWrap.style.display = 'none';
+    validate();
+  }
+
+  document.getElementById('amountGrid').addEventListener('click', e => {
+    const t = e.target.closest('.btn');
+    if (!t) return;
+    if (t.id === 'manualBtn') {
+      const showing = manualWrap.style.display === 'block';
+      manualWrap.style.display = showing ? 'none' : 'block';
+      selectIn($('amountGrid'), showing ? null : t, 'selected');
+      amount = showing ? null : (Number(manualInput.value) || null);
+      if (!showing) manualInput.focus();
+      validate();
+      return;
+    }
+    const v = t.dataset.amount === 'transfer' ? 'transfer' : Number(t.dataset.amount);
+    setAmount(v, t);
+  });
+  manualInput.addEventListener('input', () => {
+    amount = Number(manualInput.value) || null;
+    validate();
+  });
+
+  document.getElementById('methodGrid').addEventListener('click', e => {
+    const t = e.target.closest('.btn');
+    if (!t) return;
+    method = t.dataset.method;
+    selectIn($('methodGrid'), t, 'selected');
+    const isTransfer = method === '계좌이체';
+    depositorWrap.style.display = isTransfer ? 'block' : 'none';
+    transferTile.classList.toggle('show', isTransfer);
+    if (isTransfer) {
+      setAmount('transfer', transferTile);
+      depositorInput.focus();
+    } else if (amount === 'transfer') {
+      setAmount(100000, document.querySelector('#amountGrid [data-amount="100000"]'));
+    }
+    validate();
+  });
+
+  document.getElementById('mealGrid').addEventListener('click', e => {
+    const t = e.target.closest('.btn');
+    if (!t) return;
+    mealCount = Number(t.dataset.meal);
+    selectIn($('mealGrid'), t, 'selected');
+    validate();
+  });
+
+  function validate() {
+    const ok = SIDE && nameEl.value.trim() && method && mealCount !== null && amount;
+    submitBtn.disabled = !ok;
+  }
+  nameEl.addEventListener('input', validate);
+
+  function resetForm() {
+    nameEl.value = '';
+    relationEl.value = '';
+    method = null;
+    mealCount = null;
+    depositorInput.value = '';
+    depositorWrap.style.display = 'none';
+    transferTile.classList.remove('show');
+    manualInput.value = '';
+    selectIn($('methodGrid'), null, 'selected');
+    selectIn($('mealGrid'), null, 'selected');
+    setAmount(100000, document.querySelector('#amountGrid [data-amount="100000"]'));
+    setMealDefault();
+    submitBtn.disabled = true;
+    nameEl.focus();
+  }
+
+  function setMealDefault() {
+    mealCount = 1;
+    selectIn($('mealGrid'), document.querySelector('#mealGrid [data-meal="1"]'), 'selected');
+  }
+
+  submitBtn.addEventListener('click', () => {
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    const payload = {
+      side: SIDE,
+      name: nameEl.value.trim(),
+      relation: relationEl.value.trim(),
+      amount: amount === 'transfer' ? 0 : (amount || 0),
+      method: method,
+      depositor: method === '계좌이체' ? depositorInput.value.trim() : '',
+      mealCount: mealCount,
+      receiver: receiverEl.value.trim()
+    };
+    submitEntry(payload, summary => {
+      const amountText = payload.amount ? payload.amount.toLocaleString() + '원' : '금액 미확인';
+      showToast(payload.name + '님 ' + amountText + ' 접수완료 (' + payload.method + ')');
+      applySummary(summary);
+      resetForm();
+    });
+  });
+
+  function applySummary(s) {
+    $('sumCount').textContent = s.count + '명';
+    $('sumMeals').textContent = s.meals + '장';
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 1800);
+  }
+
+  $('searchBtn').addEventListener('click', () => {
+    const kw = $('searchInput').value.trim();
+    if (!kw) return;
+    search(kw, rows => {
+      const box = $('searchResults');
+      if (!rows.length) { box.innerHTML = '<div class="empty">검색 결과 없음</div>'; return; }
+      box.innerHTML = rows.map(r => {
+        const time = r.time || '';
+        const amt = Number(r.amount || 0) ? Number(r.amount).toLocaleString() + '원' : '금액 미확인';
+        const method = r.method || '';
+        const dep = r.depositor ? ' (입금자: ' + r.depositor + ')' : '';
+        return '<div class="resultRow"><div><div class="r-name">' + r.name + '</div>' +
+          '<div class="r-sub">' + time + ' · ' + method + dep + '</div></div>' +
+          '<div>' + amt + '</div></div>';
+      }).join('');
+    });
+  });
+
+  if (SIDE) applySide(SIDE);
+  setAmount(100000, document.querySelector('#amountGrid [data-amount="100000"]'));
+  setMealDefault();
+  fetchSummary(applySummary);
+  nameEl.focus();
+})();
+</script>
+</body>
+</html>
