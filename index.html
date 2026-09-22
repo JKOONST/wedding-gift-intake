@@ -93,6 +93,7 @@
   .btn.manual{grid-column:span 3;margin-top:4px;background:#f7f7f9;}
   .btn.manual.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
   #manualAmountWrap{margin-top:8px;display:none;}
+  #relationManualWrap{margin-top:8px;display:none;}
   .btn.side{border-width:2px;}
   .btn.side.selected{color:#fff;}
   #depositorWrap{margin-top:10px;display:none;}
@@ -219,7 +220,17 @@
 
   <div class="card">
     <label>관계 / 소속</label>
-    <input id="relation" type="text" placeholder="예: 신랑 회사, 대학 동기 (선택)" autocomplete="off">
+    <div class="grid" id="relationGrid">
+      <div class="btn" data-relation="가족">가족</div>
+      <div class="btn" data-relation="친척">친척</div>
+      <div class="btn" data-relation="회사">회사</div>
+      <div class="btn" data-relation="대학동기">대학동기</div>
+      <div class="btn" data-relation="친구">친구</div>
+      <div class="btn manual" id="relationManualBtn">기타 (직접입력)</div>
+    </div>
+    <div id="relationManualWrap">
+      <input id="relationManual" type="text" placeholder="관계 직접 입력" autocomplete="off">
+    </div>
   </div>
 
   <div class="card">
@@ -391,13 +402,37 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   });
 
   // ---- state ----
-  let amount = null, method = null, mealCount = null;
+  let amount = null, method = null, mealCount = null, relation = '';
 
-  const nameEl = $('name'), relationEl = $('relation'), receiverEl = $('receiver');
+  const nameEl = $('name'), receiverEl = $('receiver');
   const depositorWrap = $('depositorWrap'), depositorInput = $('depositor');
   const transferTile = $('transferTile');
   const manualBtn = $('manualBtn'), manualWrap = $('manualAmountWrap'), manualInput = $('manualAmount');
+  const relationManualWrap = $('relationManualWrap'), relationManualInput = $('relationManual');
   const submitBtn = $('submitBtn');
+
+  function setRelation(value, tileEl) {
+    relation = value;
+    selectIn($('relationGrid'), tileEl, 'selected');
+    relationManualWrap.style.display = 'none';
+  }
+
+  document.getElementById('relationGrid').addEventListener('click', e => {
+    const t = e.target.closest('.btn');
+    if (!t) return;
+    if (t.id === 'relationManualBtn') {
+      const showing = relationManualWrap.style.display === 'block';
+      relationManualWrap.style.display = showing ? 'none' : 'block';
+      selectIn($('relationGrid'), showing ? null : t, 'selected');
+      relation = showing ? '' : relationManualInput.value.trim();
+      if (!showing) relationManualInput.focus();
+      return;
+    }
+    setRelation(t.dataset.relation, t);
+  });
+  relationManualInput.addEventListener('input', () => {
+    relation = relationManualInput.value.trim();
+  });
 
   receiverEl.addEventListener('input', () => localStorage.setItem('receiver_' + SIDE, receiverEl.value));
 
@@ -470,7 +505,10 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
 
   function resetForm() {
     nameEl.value = '';
-    relationEl.value = '';
+    relation = '';
+    relationManualInput.value = '';
+    relationManualWrap.style.display = 'none';
+    selectIn($('relationGrid'), null, 'selected');
     mealCount = null;
     depositorInput.value = '';
     depositorWrap.style.display = 'none';
@@ -496,7 +534,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
     const payload = {
       side: SIDE,
       name: nameEl.value.trim(),
-      relation: relationEl.value.trim(),
+      relation: relation,
       amount: amount === 'transfer' ? 0 : (amount || 0),
       method: method,
       depositor: method === '계좌이체' ? depositorInput.value.trim() : '',
