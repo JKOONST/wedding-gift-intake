@@ -49,6 +49,17 @@
     font-size:13px;
   }
   main{padding:14px;max-width:520px;margin:0 auto;}
+  @media (min-width:700px){
+    main{
+      max-width:920px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+      align-items:start;
+    }
+    main > *{grid-column:1 / -1;margin-bottom:0;}
+    main > .half{grid-column:auto;}
+  }
   .card{
     background:var(--card);
     border-radius:14px;
@@ -213,12 +224,12 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card half">
     <label>성함</label>
     <input id="name" type="text" placeholder="하객 성함" autocomplete="off">
   </div>
 
-  <div class="card">
+  <div class="card half">
     <label>관계 / 소속</label>
     <div class="grid" id="relationGrid">
       <div class="btn" data-relation="가족">가족</div>
@@ -233,7 +244,7 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card half">
     <label>결제방법</label>
     <div class="grid pay" id="methodGrid">
       <div class="btn" data-method="현금">현금</div>
@@ -241,6 +252,17 @@
     </div>
     <div id="depositorWrap">
       <input id="depositor" type="text" placeholder="입금자명 (통장 표시 이름이 다르면 입력)" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="card half">
+    <label>식권 매수</label>
+    <div class="grid meal" id="mealGrid">
+      <div class="btn small" data-meal="0">0</div>
+      <div class="btn small" data-meal="1">1</div>
+      <div class="btn small" data-meal="2">2</div>
+      <div class="btn small" data-meal="3">3</div>
+      <div class="btn small" data-meal="4">4</div>
     </div>
   </div>
 
@@ -258,17 +280,6 @@
     </div>
     <div id="manualAmountWrap">
       <input id="manualAmount" type="number" inputmode="numeric" placeholder="금액 직접 입력 (원)">
-    </div>
-  </div>
-
-  <div class="card">
-    <label>식권 매수</label>
-    <div class="grid meal" id="mealGrid">
-      <div class="btn small" data-meal="0">0</div>
-      <div class="btn small" data-meal="1">1</div>
-      <div class="btn small" data-meal="2">2</div>
-      <div class="btn small" data-meal="3">3</div>
-      <div class="btn small" data-meal="4">4</div>
     </div>
   </div>
 
@@ -503,12 +514,16 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   }
   nameEl.addEventListener('input', validate);
 
-  function resetForm() {
-    nameEl.value = '';
+  function setRelationManualDefault() {
     relation = '';
     relationManualInput.value = '';
-    relationManualWrap.style.display = 'none';
-    selectIn($('relationGrid'), null, 'selected');
+    relationManualWrap.style.display = 'block';
+    selectIn($('relationGrid'), $('relationManualBtn'), 'selected');
+  }
+
+  function resetForm() {
+    nameEl.value = '';
+    setRelationManualDefault();
     mealCount = null;
     depositorInput.value = '';
     depositorWrap.style.display = 'none';
@@ -615,6 +630,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   if (SIDE) applySide(SIDE);
   setAmount(100000, document.querySelector('#amountGrid [data-amount="100000"]'));
   setMethod('현금', document.querySelector('#methodGrid [data-method="현금"]'));
+  setRelationManualDefault();
   setMealDefault();
   fetchSummary(applySummary);
   nameEl.focus();
