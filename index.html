@@ -49,16 +49,35 @@
     font-size:13px;
   }
   main{padding:14px;max-width:520px;margin:0 auto;}
+  .layout{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+    grid-template-areas:
+      "summary" "gubun" "name" "relation" "method" "meal" "amount" "submit" "search";
+  }
+  .layout > *{margin-bottom:0;}
+  .area-summary{grid-area:summary;}
+  .area-gubun{grid-area:gubun;}
+  .area-name{grid-area:name;}
+  .area-relation{grid-area:relation;}
+  .area-method{grid-area:method;}
+  .area-meal{grid-area:meal;}
+  .area-amount{grid-area:amount;}
+  .area-submit{grid-area:submit;}
+  .area-search{grid-area:search;}
   @media (min-width:700px){
-    main{
-      max-width:920px;
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-      align-items:start;
+    main{max-width:920px;}
+    .layout{
+      grid-template-columns:1.6fr 1fr;
+      grid-template-areas:
+        "gubun    summary"
+        "name     method"
+        "relation meal"
+        "amount   amount"
+        "submit   submit"
+        "search   search";
     }
-    main > *{grid-column:1 / -1;margin-bottom:0;}
-    main > .half{grid-column:auto;}
   }
   .card{
     background:var(--card);
@@ -209,92 +228,94 @@
 </header>
 
 <main>
-  <div class="summary">
-    <div class="stat"><span class="num" id="sumCount">0명</span><span class="lbl">접수 인원</span></div>
-    <div class="stat"><span class="num" id="sumMeals">0장</span><span class="lbl">식권 매수</span></div>
-  </div>
-
   <div class="failBanner" id="failBanner"></div>
 
-  <div class="card">
-    <label>구분 (이 기기에서는 한 번만 선택하면 계속 기억됩니다)</label>
-    <div class="grid pay" id="sideGrid">
-      <div class="btn side" data-side="junhyuk" style="border-color:#2f6fed;">준혁측</div>
-      <div class="btn side" data-side="eunsu" style="border-color:#e0578c;">은수측</div>
+  <div class="layout">
+    <div class="summary area-summary">
+      <div class="stat"><span class="num" id="sumCount">0명</span><span class="lbl">접수 인원</span></div>
+      <div class="stat"><span class="num" id="sumMeals">0장</span><span class="lbl">식권 매수</span></div>
     </div>
-  </div>
 
-  <div class="card half">
-    <label>성함</label>
-    <input id="name" type="text" placeholder="하객 성함" autocomplete="off">
-  </div>
-
-  <div class="card half">
-    <label>관계 / 소속</label>
-    <div class="grid" id="relationGrid">
-      <div class="btn" data-relation="가족">가족</div>
-      <div class="btn" data-relation="친척">친척</div>
-      <div class="btn" data-relation="회사">회사</div>
-      <div class="btn" data-relation="대학동기">대학동기</div>
-      <div class="btn" data-relation="친구">친구</div>
-      <div class="btn manual" id="relationManualBtn">기타 (직접입력)</div>
-    </div>
-    <div id="relationManualWrap">
-      <input id="relationManual" type="text" placeholder="관계 직접 입력" autocomplete="off">
-    </div>
-  </div>
-
-  <div class="card half">
-    <label>결제방법</label>
-    <div class="grid pay" id="methodGrid">
-      <div class="btn" data-method="현금">현금</div>
-      <div class="btn" data-method="계좌이체">계좌이체</div>
-    </div>
-    <div id="depositorWrap">
-      <input id="depositor" type="text" placeholder="입금자명 (통장 표시 이름이 다르면 입력)" autocomplete="off">
-    </div>
-  </div>
-
-  <div class="card half">
-    <label>식권 매수</label>
-    <div class="grid meal" id="mealGrid">
-      <div class="btn small" data-meal="0">0</div>
-      <div class="btn small" data-meal="1">1</div>
-      <div class="btn small" data-meal="2">2</div>
-      <div class="btn small" data-meal="3">3</div>
-      <div class="btn small" data-meal="4">4</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <label>금액</label>
-    <div class="grid" id="amountGrid">
-      <div class="btn" data-amount="50000">5만원</div>
-      <div class="btn" data-amount="100000">10만원</div>
-      <div class="btn" data-amount="150000">15만원</div>
-      <div class="btn" data-amount="200000">20만원</div>
-      <div class="btn" data-amount="250000">25만원</div>
-      <div class="btn" data-amount="300000">30만원</div>
-      <div class="btn manual" id="manualBtn">직접입력</div>
-      <div class="btn transfer" id="transferTile" data-amount="transfer">계좌이체 (금액 나중에 확인)</div>
-    </div>
-    <div id="manualAmountWrap">
-      <input id="manualAmount" type="number" inputmode="numeric" placeholder="금액 직접 입력 (원)">
-    </div>
-  </div>
-
-  <button class="submit" id="submitBtn" disabled>접수 완료</button>
-
-  <details>
-    <summary>이름으로 조회 (계좌이체 확인용)</summary>
-    <div class="card" style="margin-top:8px;">
-      <div class="searchRow">
-        <input id="searchInput" type="text" placeholder="성함 입력">
-        <button id="searchBtn">검색</button>
+    <div class="card area-gubun">
+      <label>구분 (이 기기에서는 한 번만 선택하면 계속 기억됩니다)</label>
+      <div class="grid pay" id="sideGrid">
+        <div class="btn side" data-side="junhyuk" style="border-color:#2f6fed;">준혁측</div>
+        <div class="btn side" data-side="eunsu" style="border-color:#e0578c;">은수측</div>
       </div>
-      <div id="searchResults"></div>
     </div>
-  </details>
+
+    <div class="card area-name">
+      <label>성함</label>
+      <input id="name" type="text" placeholder="하객 성함" autocomplete="off">
+    </div>
+
+    <div class="card area-relation">
+      <label>관계 / 소속</label>
+      <div class="grid" id="relationGrid">
+        <div class="btn" data-relation="가족">가족</div>
+        <div class="btn" data-relation="친척">친척</div>
+        <div class="btn" data-relation="회사">회사</div>
+        <div class="btn" data-relation="대학동기">대학동기</div>
+        <div class="btn" data-relation="친구">친구</div>
+        <div class="btn manual" id="relationManualBtn">기타 (직접입력)</div>
+      </div>
+      <div id="relationManualWrap">
+        <input id="relationManual" type="text" placeholder="관계 직접 입력" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="card area-method">
+      <label>결제방법</label>
+      <div class="grid pay" id="methodGrid">
+        <div class="btn" data-method="현금">현금</div>
+        <div class="btn" data-method="계좌이체">계좌이체</div>
+      </div>
+      <div id="depositorWrap">
+        <input id="depositor" type="text" placeholder="입금자명 (통장 표시 이름이 다르면 입력)" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="card area-meal">
+      <label>식권 매수</label>
+      <div class="grid meal" id="mealGrid">
+        <div class="btn small" data-meal="0">0</div>
+        <div class="btn small" data-meal="1">1</div>
+        <div class="btn small" data-meal="2">2</div>
+        <div class="btn small" data-meal="3">3</div>
+        <div class="btn small" data-meal="4">4</div>
+      </div>
+    </div>
+
+    <div class="card area-amount">
+      <label>금액</label>
+      <div class="grid" id="amountGrid">
+        <div class="btn" data-amount="50000">5만원</div>
+        <div class="btn" data-amount="100000">10만원</div>
+        <div class="btn" data-amount="150000">15만원</div>
+        <div class="btn" data-amount="200000">20만원</div>
+        <div class="btn" data-amount="250000">25만원</div>
+        <div class="btn" data-amount="300000">30만원</div>
+        <div class="btn manual" id="manualBtn">직접입력</div>
+        <div class="btn transfer" id="transferTile" data-amount="transfer">계좌이체 (금액 나중에 확인)</div>
+      </div>
+      <div id="manualAmountWrap">
+        <input id="manualAmount" type="number" inputmode="numeric" placeholder="금액 직접 입력 (원)">
+      </div>
+    </div>
+
+    <button class="submit area-submit" id="submitBtn" disabled>접수 완료</button>
+
+    <details class="area-search">
+      <summary>이름으로 조회 (계좌이체 확인용)</summary>
+      <div class="card" style="margin-top:8px;">
+        <div class="searchRow">
+          <input id="searchInput" type="text" placeholder="성함 입력">
+          <button id="searchBtn">검색</button>
+        </div>
+        <div id="searchResults"></div>
+      </div>
+    </details>
+  </div>
 </main>
 
 <div class="toast" id="toast"></div>
