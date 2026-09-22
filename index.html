@@ -67,9 +67,10 @@
   .area-submit{grid-area:submit;}
   .area-search{grid-area:search;}
   @media (min-width:700px){
-    main{max-width:920px;}
+    main{max-width:960px;padding:8px 14px;}
     .layout{
       grid-template-columns:1.6fr 1fr;
+      gap:8px;
       grid-template-areas:
         "gubun    summary"
         "name     method"
@@ -78,6 +79,19 @@
         "submit   submit"
         "search   search";
     }
+    header{padding:7px 16px;}
+    .card{padding:8px 12px;}
+    label{margin-bottom:3px;}
+    .btn{padding:9px 4px;font-size:15px;}
+    .btn.small{padding:8px 4px;}
+    input[type=text],input[type=number]{padding:8px 12px;font-size:16px;}
+    .summary .stat{padding:8px 8px 7px;}
+    .summary .stat .num{font-size:20px;}
+    .area-amount #amountGrid{grid-template-columns:repeat(6,1fr);}
+    .area-amount .btn.manual,.area-amount .btn.transfer{grid-column:1 / -1;margin-top:0;}
+    .area-relation #relationGrid{grid-template-columns:repeat(6,1fr);}
+    .area-relation .relationInput{grid-column:auto;}
+    .submit{padding:13px;font-size:17px;}
   }
   .card{
     background:var(--card);
@@ -123,7 +137,7 @@
   .btn.manual{grid-column:span 3;margin-top:4px;background:#f7f7f9;}
   .btn.manual.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
   #manualAmountWrap{margin-top:8px;display:none;}
-  #relationManualWrap{margin-top:8px;display:none;}
+  .relationInput{grid-column:1 / -1;margin-top:4px;text-align:center;}
   .btn.side{border-width:2px;}
   .btn.side.selected{color:#fff;}
   #depositorWrap{margin-top:10px;display:none;}
@@ -257,10 +271,7 @@
         <div class="btn" data-relation="회사">회사</div>
         <div class="btn" data-relation="대학동기">대학동기</div>
         <div class="btn" data-relation="친구">친구</div>
-        <div class="btn manual" id="relationManualBtn">기타 (직접입력)</div>
-      </div>
-      <div id="relationManualWrap">
-        <input id="relationManual" type="text" placeholder="관계 직접 입력" autocomplete="off">
+        <input id="relationManual" class="relationInput" type="text" placeholder="직접입력" autocomplete="off">
       </div>
     </div>
 
@@ -440,30 +451,23 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   const depositorWrap = $('depositorWrap'), depositorInput = $('depositor');
   const transferTile = $('transferTile');
   const manualBtn = $('manualBtn'), manualWrap = $('manualAmountWrap'), manualInput = $('manualAmount');
-  const relationManualWrap = $('relationManualWrap'), relationManualInput = $('relationManual');
+  const relationManualInput = $('relationManual');
   const submitBtn = $('submitBtn');
 
   function setRelation(value, tileEl) {
     relation = value;
     selectIn($('relationGrid'), tileEl, 'selected');
-    relationManualWrap.style.display = 'none';
+    relationManualInput.value = value;
   }
 
   document.getElementById('relationGrid').addEventListener('click', e => {
     const t = e.target.closest('.btn');
     if (!t) return;
-    if (t.id === 'relationManualBtn') {
-      const showing = relationManualWrap.style.display === 'block';
-      relationManualWrap.style.display = showing ? 'none' : 'block';
-      selectIn($('relationGrid'), showing ? null : t, 'selected');
-      relation = showing ? '' : relationManualInput.value.trim();
-      if (!showing) relationManualInput.focus();
-      return;
-    }
     setRelation(t.dataset.relation, t);
   });
   relationManualInput.addEventListener('input', () => {
     relation = relationManualInput.value.trim();
+    selectIn($('relationGrid'), null, 'selected');
   });
 
   receiverEl.addEventListener('input', () => localStorage.setItem('receiver_' + SIDE, receiverEl.value));
@@ -535,16 +539,15 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   }
   nameEl.addEventListener('input', validate);
 
-  function setRelationManualDefault() {
+  function resetRelation() {
     relation = '';
     relationManualInput.value = '';
-    relationManualWrap.style.display = 'block';
-    selectIn($('relationGrid'), $('relationManualBtn'), 'selected');
+    selectIn($('relationGrid'), null, 'selected');
   }
 
   function resetForm() {
     nameEl.value = '';
-    setRelationManualDefault();
+    resetRelation();
     mealCount = null;
     depositorInput.value = '';
     depositorWrap.style.display = 'none';
@@ -651,7 +654,6 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   if (SIDE) applySide(SIDE);
   setAmount(100000, document.querySelector('#amountGrid [data-amount="100000"]'));
   setMethod('현금', document.querySelector('#methodGrid [data-method="현금"]'));
-  setRelationManualDefault();
   setMealDefault();
   fetchSummary(applySummary);
   nameEl.focus();
