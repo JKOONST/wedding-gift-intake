@@ -6,9 +6,7 @@
 <title>축의금 접수</title>
 <style>
   :root{
-    --junhyuk:#2f6fed;
-    --eunsu:#e0578c;
-    --accent:#6b7280;
+    --accent:#2f6fed;
     --bg:#f4f5f7;
     --card:#ffffff;
     --text:#1c1f26;
@@ -56,13 +54,12 @@
     grid-template-columns:1fr;
     gap:12px;
     grid-template-areas:
-      "summary" "gubun" "name" "amount" "meal" "opts" "submit" "search";
+      "summary" "name" "amount" "meal" "opts" "submit" "search";
   }
   .layout > *{margin-bottom:0;}
   .area-side{display:contents;}
   .area-side > *{margin-bottom:0;}
   .area-summary{grid-area:summary;}
-  .area-gubun{grid-area:gubun;}
   .area-opts{grid-area:opts;}
   .area-name{grid-area:name;}
   .area-amount{grid-area:amount;}
@@ -77,7 +74,6 @@
     margin-bottom:12px;
     box-shadow:0 1px 2px rgba(0,0,0,.04);
   }
-  .card.attn{box-shadow:0 0 0 2px #f5a623;}
   label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600;}
   input[type=text],input[type=number]{
     width:100%;
@@ -115,8 +111,6 @@
   .btn.manual{grid-column:span 3;margin-top:4px;background:#f7f7f9;}
   .btn.manual.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
   #manualAmountWrap{margin-top:8px;display:none;}
-  .btn.side{border-width:2px;}
-  .btn.side.selected{color:#fff;}
   #depositorWrap{margin-top:8px;display:none;}
 
   .optRow{display:flex;align-items:center;gap:10px;}
@@ -247,7 +241,7 @@
 <div class="apiWarn" id="apiWarn">API_URL이 설정되지 않아 미리보기(로컬 저장) 모드로 동작 중입니다. 실제 배포 전 index.html 맨 아래 API_URL을 채워주세요.</div>
 
 <header>
-  <h1 id="title">축의금 접수 - 구분을 선택해주세요</h1>
+  <h1>축의금 접수</h1>
   <div class="staff">
     접수자
     <input id="receiver" type="text" placeholder="이름 입력 (한 번만 입력하면 기억함)">
@@ -262,16 +256,6 @@
       <div class="summary area-summary">
         <div class="stat"><span class="num" id="sumCount">0명</span><span class="lbl">접수 인원</span></div>
         <div class="stat"><span class="num" id="sumMeals">0장</span><span class="lbl">식권 매수</span></div>
-      </div>
-
-      <div class="card area-gubun" id="gubunCard">
-        <div class="optRow">
-          <span class="optLabel">구분</span>
-          <div class="seg" id="sideGrid">
-            <div class="btn compact side" data-side="junhyuk" style="border-color:#2f6fed;">준혁측</div>
-            <div class="btn compact side" data-side="eunsu" style="border-color:#e0578c;">은수측</div>
-          </div>
-        </div>
       </div>
 
       <div class="card area-opts">
@@ -349,12 +333,9 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
 </script>
 <script>
 (function(){
-  const SIDE_MAP = { junhyuk: { label: '준혁측', color: '#2f6fed' }, eunsu: { label: '은수측', color: '#e0578c' } };
+  // 준혁/은수 구분 없이 한 목록으로 받는다. 서버(Code.gs)가 side 값으로 시트 탭을 고르므로 기존 탭("준혁측 접수")을 그대로 쓴다.
+  const SIDE = 'junhyuk';
   const DEFAULT_RELATION = '기타';
-  const params = new URLSearchParams(location.search);
-  const urlSide = params.get('side');
-  let SIDE = (urlSide && SIDE_MAP[urlSide]) ? urlSide : (localStorage.getItem('wedding_side') || '');
-  if (!SIDE_MAP[SIDE]) SIDE = '';
 
   const useMock = !API_URL;
   if (useMock) document.getElementById('apiWarn').classList.add('show');
@@ -417,7 +398,6 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
       .catch(errCb || onError);
   }
   function fetchSummary(cb) {
-    if (!SIDE) { cb({ count: 0, total: 0, meals: 0 }); return; }
     if (useMock) { cb(mockSummary()); return; }
     callApi('getSummary', { side: SIDE }).then(cb).catch(onError);
   }
@@ -431,32 +411,6 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   function onError(err) {
     showToast('오류: ' + (err && err.message ? err.message : err));
   }
-
-  // ---- side (준혁측/은수측) ----
-  function applySide(side) {
-    SIDE = side;
-    localStorage.setItem('wedding_side', side);
-    const info = SIDE_MAP[side];
-    document.title = '축의금 접수 - ' + info.label;
-    $('title').textContent = '축의금 접수 - ' + info.label;
-    document.documentElement.style.setProperty('--accent', info.color);
-    $('gubunCard').classList.remove('attn');
-    document.querySelectorAll('#sideGrid .btn').forEach(b => {
-      const on = b.dataset.side === side;
-      b.classList.toggle('selected', on);
-      b.style.background = on ? b.style.borderColor : '#fff';
-      b.style.color = on ? '#fff' : 'var(--text)';
-    });
-    receiverEl.value = localStorage.getItem('receiver_' + side) || '';
-    fetchSummary(applySummary);
-    validate();
-  }
-
-  $('sideGrid').addEventListener('click', e => {
-    const t = e.target.closest('.btn');
-    if (!t) return;
-    applySide(t.dataset.side);
-  });
 
   // ---- state ----
   let amount = null, method = null, mealCount = null, relation = DEFAULT_RELATION;
@@ -492,7 +446,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
     selectIn($('relationGrid'), document.querySelector('#relationGrid [data-relation="기타"]'), 'selected');
   }
 
-  receiverEl.addEventListener('input', () => localStorage.setItem('receiver_' + SIDE, receiverEl.value));
+  receiverEl.value = localStorage.getItem('receiver') || '';
+  receiverEl.addEventListener('input', () => localStorage.setItem('receiver', receiverEl.value));
 
   function selectIn(grid, selector, cls) {
     grid.querySelectorAll('.btn').forEach(b => b.classList.remove(cls));
@@ -556,7 +511,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   });
 
   function validate() {
-    const ok = SIDE && nameEl.value.trim() && method && mealCount !== null && amount;
+    const ok = nameEl.value.trim() && method && mealCount !== null && amount;
     submitBtn.disabled = !ok;
   }
   nameEl.addEventListener('input', validate);
@@ -667,7 +622,6 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
     });
   });
 
-  if (SIDE) applySide(SIDE); else $('gubunCard').classList.add('attn');
   setAmount(100000, document.querySelector('#amountGrid [data-amount="100000"]'));
   setMethod('현금', document.querySelector('#methodGrid [data-method="현금"]'));
   setMealDefault();
