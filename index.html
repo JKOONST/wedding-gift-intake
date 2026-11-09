@@ -17,6 +17,7 @@
     --good:#1fa855;
   }
   *{box-sizing:border-box;}
+  [hidden]{display:none !important;}
   body{
     margin:0;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
@@ -49,50 +50,26 @@
     font-size:13px;
   }
   main{padding:14px;max-width:520px;margin:0 auto;}
+
   .layout{
     display:grid;
     grid-template-columns:1fr;
     gap:12px;
     grid-template-areas:
-      "summary" "gubun" "name" "relation" "method" "meal" "amount" "submit" "search";
+      "summary" "gubun" "name" "amount" "meal" "opts" "submit" "search";
   }
   .layout > *{margin-bottom:0;}
+  .area-side{display:contents;}
+  .area-side > *{margin-bottom:0;}
   .area-summary{grid-area:summary;}
   .area-gubun{grid-area:gubun;}
+  .area-opts{grid-area:opts;}
   .area-name{grid-area:name;}
-  .area-relation{grid-area:relation;}
-  .area-method{grid-area:method;}
-  .area-meal{grid-area:meal;}
   .area-amount{grid-area:amount;}
+  .area-meal{grid-area:meal;}
   .area-submit{grid-area:submit;}
   .area-search{grid-area:search;}
-  @media (min-width:700px){
-    main{max-width:960px;padding:8px 14px;}
-    .layout{
-      grid-template-columns:1.6fr 1fr;
-      gap:8px;
-      grid-template-areas:
-        "gubun    summary"
-        "name     method"
-        "relation meal"
-        "amount   amount"
-        "submit   submit"
-        "search   search";
-    }
-    header{padding:7px 16px;}
-    .card{padding:8px 12px;}
-    label{margin-bottom:3px;}
-    .btn{padding:9px 4px;font-size:15px;}
-    .btn.small{padding:8px 4px;}
-    input[type=text],input[type=number]{padding:8px 12px;font-size:16px;}
-    .summary .stat{padding:8px 8px 7px;}
-    .summary .stat .num{font-size:20px;}
-    .area-amount #amountGrid{grid-template-columns:repeat(6,1fr);}
-    .area-amount .btn.manual,.area-amount .btn.transfer{grid-column:1 / -1;margin-top:0;}
-    .area-relation #relationGrid{grid-template-columns:repeat(6,1fr);}
-    .area-relation .relationInput{grid-column:auto;}
-    .submit{padding:13px;font-size:17px;}
-  }
+
   .card{
     background:var(--card);
     border-radius:14px;
@@ -100,6 +77,7 @@
     margin-bottom:12px;
     box-shadow:0 1px 2px rgba(0,0,0,.04);
   }
+  .card.attn{box-shadow:0 0 0 2px #f5a623;}
   label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600;}
   input[type=text],input[type=number]{
     width:100%;
@@ -111,7 +89,6 @@
   }
   input:focus{outline:none;border-color:var(--accent);}
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-  .grid.pay{grid-template-columns:repeat(2,1fr);}
   .grid.meal{grid-template-columns:repeat(5,1fr);}
   .btn{
     padding:16px 4px;
@@ -126,6 +103,7 @@
     -webkit-tap-highlight-color:transparent;
   }
   .btn.small{padding:12px 4px;font-size:15px;}
+  .btn.compact{padding:10px 4px;font-size:14px;}
   .btn.selected{
     background:var(--accent);
     border-color:var(--accent);
@@ -137,10 +115,26 @@
   .btn.manual{grid-column:span 3;margin-top:4px;background:#f7f7f9;}
   .btn.manual.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
   #manualAmountWrap{margin-top:8px;display:none;}
-  .relationInput{grid-column:1 / -1;margin-top:4px;text-align:center;}
   .btn.side{border-width:2px;}
   .btn.side.selected{color:#fff;}
-  #depositorWrap{margin-top:10px;display:none;}
+  #depositorWrap{margin-top:8px;display:none;}
+
+  .optRow{display:flex;align-items:center;gap:10px;}
+  .optLabel{flex:0 0 58px;font-size:13px;font-weight:600;color:var(--muted);}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1;}
+  #depositorWrap + .optRow{margin-top:10px;}
+  .relChip{flex:1;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .linkBtn{
+    border:1.5px solid var(--border);
+    background:#fff;
+    border-radius:10px;
+    padding:8px 12px;
+    font-size:13px;
+    font-weight:700;
+    color:var(--text);
+  }
+  #relationManual{margin-top:8px;}
+
   .submit{
     width:100%;
     padding:18px;
@@ -227,6 +221,35 @@
     flex-shrink:0;background:#c62828;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;
   }
   .failRow button:disabled{background:#e39a9a;}
+
+  /* 기본 스타일을 덮어써야 하므로 반드시 맨 아래에 둔다 */
+  @media (min-width:700px){
+    main{max-width:960px;padding:8px 14px;}
+    .layout{
+      grid-template-columns:1.6fr 1fr;
+      gap:8px;
+      align-items:start;
+      grid-template-areas:
+        "name   side"
+        "amount side"
+        "meal   side"
+        "submit submit"
+        "search search";
+    }
+    .area-side{display:flex;flex-direction:column;gap:8px;grid-area:side;}
+    header{padding:7px 16px;}
+    .card{padding:8px 12px;}
+    label{margin-bottom:3px;}
+    .btn{padding:9px 4px;font-size:15px;}
+    .btn.small{padding:8px 4px;}
+    .btn.compact{padding:8px 4px;font-size:14px;}
+    input[type=text],input[type=number]{padding:8px 12px;font-size:16px;}
+    .summary .stat{padding:8px 8px 7px;}
+    .summary .stat .num{font-size:20px;}
+    .area-amount #amountGrid{grid-template-columns:repeat(6,1fr);}
+    .area-amount .btn.manual,.area-amount .btn.transfer{grid-column:1 / -1;margin-top:0;}
+    .submit{padding:13px;font-size:17px;}
+  }
 </style>
 </head>
 <body>
@@ -245,56 +268,45 @@
   <div class="failBanner" id="failBanner"></div>
 
   <div class="layout">
-    <div class="summary area-summary">
-      <div class="stat"><span class="num" id="sumCount">0명</span><span class="lbl">접수 인원</span></div>
-      <div class="stat"><span class="num" id="sumMeals">0장</span><span class="lbl">식권 매수</span></div>
-    </div>
+    <div class="area-side">
+      <div class="summary area-summary">
+        <div class="stat"><span class="num" id="sumCount">0명</span><span class="lbl">접수 인원</span></div>
+        <div class="stat"><span class="num" id="sumMeals">0장</span><span class="lbl">식권 매수</span></div>
+      </div>
 
-    <div class="card area-gubun">
-      <label>구분 (이 기기에서는 한 번만 선택하면 계속 기억됩니다)</label>
-      <div class="grid pay" id="sideGrid">
-        <div class="btn side" data-side="junhyuk" style="border-color:#2f6fed;">준혁측</div>
-        <div class="btn side" data-side="eunsu" style="border-color:#e0578c;">은수측</div>
+      <div class="card area-gubun" id="gubunCard">
+        <div class="optRow">
+          <span class="optLabel">구분</span>
+          <div class="seg" id="sideGrid">
+            <div class="btn compact side" data-side="junhyuk" style="border-color:#2f6fed;">준혁측</div>
+            <div class="btn compact side" data-side="eunsu" style="border-color:#e0578c;">은수측</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card area-opts">
+        <div class="optRow">
+          <span class="optLabel">결제방법</span>
+          <div class="seg" id="methodGrid">
+            <div class="btn compact" data-method="현금">현금</div>
+            <div class="btn compact" data-method="계좌이체">계좌이체</div>
+          </div>
+        </div>
+        <div id="depositorWrap">
+          <input id="depositor" type="text" placeholder="입금자명 (통장 표시 이름이 다르면 입력)" autocomplete="off">
+        </div>
+        <div class="optRow">
+          <span class="optLabel">관계</span>
+          <span class="relChip" id="relationValue">기타</span>
+          <button type="button" class="linkBtn" id="relationEditBtn">직접 입력</button>
+        </div>
+        <input id="relationManual" type="text" placeholder="관계 입력 (예: 회사, 대학동기)" autocomplete="off" hidden>
       </div>
     </div>
 
     <div class="card area-name">
       <label>성함</label>
       <input id="name" type="text" placeholder="하객 성함" autocomplete="off">
-    </div>
-
-    <div class="card area-relation">
-      <label>관계 / 소속</label>
-      <div class="grid" id="relationGrid">
-        <div class="btn" data-relation="가족">가족</div>
-        <div class="btn" data-relation="친척">친척</div>
-        <div class="btn" data-relation="회사">회사</div>
-        <div class="btn" data-relation="대학동기">대학동기</div>
-        <div class="btn" data-relation="친구">친구</div>
-        <input id="relationManual" class="relationInput" type="text" placeholder="직접입력" autocomplete="off">
-      </div>
-    </div>
-
-    <div class="card area-method">
-      <label>결제방법</label>
-      <div class="grid pay" id="methodGrid">
-        <div class="btn" data-method="현금">현금</div>
-        <div class="btn" data-method="계좌이체">계좌이체</div>
-      </div>
-      <div id="depositorWrap">
-        <input id="depositor" type="text" placeholder="입금자명 (통장 표시 이름이 다르면 입력)" autocomplete="off">
-      </div>
-    </div>
-
-    <div class="card area-meal">
-      <label>식권 매수</label>
-      <div class="grid meal" id="mealGrid">
-        <div class="btn small" data-meal="0">0</div>
-        <div class="btn small" data-meal="1">1</div>
-        <div class="btn small" data-meal="2">2</div>
-        <div class="btn small" data-meal="3">3</div>
-        <div class="btn small" data-meal="4">4</div>
-      </div>
     </div>
 
     <div class="card area-amount">
@@ -311,6 +323,17 @@
       </div>
       <div id="manualAmountWrap">
         <input id="manualAmount" type="number" inputmode="numeric" placeholder="금액 직접 입력 (원)">
+      </div>
+    </div>
+
+    <div class="card area-meal">
+      <label>식권 매수</label>
+      <div class="grid meal" id="mealGrid">
+        <div class="btn small" data-meal="0">0</div>
+        <div class="btn small" data-meal="1">1</div>
+        <div class="btn small" data-meal="2">2</div>
+        <div class="btn small" data-meal="3">3</div>
+        <div class="btn small" data-meal="4">4</div>
       </div>
     </div>
 
@@ -338,6 +361,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
 <script>
 (function(){
   const SIDE_MAP = { junhyuk: { label: '준혁측', color: '#2f6fed' }, eunsu: { label: '은수측', color: '#e0578c' } };
+  const DEFAULT_RELATION = '기타';
   const params = new URLSearchParams(location.search);
   const urlSide = params.get('side');
   let SIDE = (urlSide && SIDE_MAP[urlSide]) ? urlSide : (localStorage.getItem('wedding_side') || '');
@@ -427,6 +451,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
     document.title = '축의금 접수 - ' + info.label;
     $('title').textContent = '축의금 접수 - ' + info.label;
     document.documentElement.style.setProperty('--accent', info.color);
+    $('gubunCard').classList.remove('attn');
     document.querySelectorAll('#sideGrid .btn').forEach(b => {
       const on = b.dataset.side === side;
       b.classList.toggle('selected', on);
@@ -445,30 +470,38 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   });
 
   // ---- state ----
-  let amount = null, method = null, mealCount = null, relation = '';
+  let amount = null, method = null, mealCount = null, relation = DEFAULT_RELATION;
 
   const nameEl = $('name'), receiverEl = $('receiver');
   const depositorWrap = $('depositorWrap'), depositorInput = $('depositor');
   const transferTile = $('transferTile');
   const manualBtn = $('manualBtn'), manualWrap = $('manualAmountWrap'), manualInput = $('manualAmount');
-  const relationManualInput = $('relationManual');
+  const relationValueEl = $('relationValue'), relationEditBtn = $('relationEditBtn'), relationManualInput = $('relationManual');
   const submitBtn = $('submitBtn');
 
-  function setRelation(value, tileEl) {
-    relation = value;
-    selectIn($('relationGrid'), tileEl, 'selected');
-    relationManualInput.value = value;
-  }
-
-  document.getElementById('relationGrid').addEventListener('click', e => {
-    const t = e.target.closest('.btn');
-    if (!t) return;
-    setRelation(t.dataset.relation, t);
+  // 관계는 평소엔 '기타'로 고정이고, 필요할 때만 직접 입력 버튼으로 입력칸을 연다
+  relationEditBtn.addEventListener('click', () => {
+    const opening = relationManualInput.hidden;
+    relationManualInput.hidden = !opening;
+    if (opening) {
+      relationEditBtn.textContent = '기타로 되돌리기';
+      relationManualInput.focus();
+    } else {
+      resetRelation();
+    }
   });
   relationManualInput.addEventListener('input', () => {
-    relation = relationManualInput.value.trim();
-    selectIn($('relationGrid'), null, 'selected');
+    relation = relationManualInput.value.trim() || DEFAULT_RELATION;
+    relationValueEl.textContent = relation;
   });
+
+  function resetRelation() {
+    relation = DEFAULT_RELATION;
+    relationValueEl.textContent = relation;
+    relationManualInput.value = '';
+    relationManualInput.hidden = true;
+    relationEditBtn.textContent = '직접 입력';
+  }
 
   receiverEl.addEventListener('input', () => localStorage.setItem('receiver_' + SIDE, receiverEl.value));
 
@@ -538,12 +571,6 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
     submitBtn.disabled = !ok;
   }
   nameEl.addEventListener('input', validate);
-
-  function resetRelation() {
-    relation = '';
-    relationManualInput.value = '';
-    selectIn($('relationGrid'), null, 'selected');
-  }
 
   function resetForm() {
     nameEl.value = '';
@@ -651,7 +678,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
     });
   });
 
-  if (SIDE) applySide(SIDE);
+  if (SIDE) applySide(SIDE); else $('gubunCard').classList.add('attn');
   setAmount(100000, document.querySelector('#amountGrid [data-amount="100000"]'));
   setMethod('현금', document.querySelector('#methodGrid [data-method="현금"]'));
   setMealDefault();
