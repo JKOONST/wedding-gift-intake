@@ -123,16 +123,6 @@
   .optLabel{flex:0 0 58px;font-size:13px;font-weight:600;color:var(--muted);}
   .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1;}
   #depositorWrap + .optRow{margin-top:10px;}
-  .relChip{flex:1;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .linkBtn{
-    border:1.5px solid var(--border);
-    background:#fff;
-    border-radius:10px;
-    padding:8px 12px;
-    font-size:13px;
-    font-weight:700;
-    color:var(--text);
-  }
   #relationManual{margin-top:8px;}
 
   .submit{
@@ -285,20 +275,19 @@
       </div>
 
       <div class="card area-opts">
-        <div class="optRow">
-          <span class="optLabel">결제방법</span>
-          <div class="seg" id="methodGrid">
-            <div class="btn compact" data-method="현금">현금</div>
-            <div class="btn compact" data-method="계좌이체">계좌이체</div>
-          </div>
+        <div class="seg" id="methodGrid">
+          <div class="btn compact" data-method="현금">현금</div>
+          <div class="btn compact" data-method="계좌이체">계좌이체</div>
         </div>
         <div id="depositorWrap">
           <input id="depositor" type="text" placeholder="입금자명 (통장 표시 이름이 다르면 입력)" autocomplete="off">
         </div>
         <div class="optRow">
           <span class="optLabel">관계</span>
-          <span class="relChip" id="relationValue">기타</span>
-          <button type="button" class="linkBtn" id="relationEditBtn">직접 입력</button>
+          <div class="seg" id="relationGrid">
+            <div class="btn compact selected" data-relation="기타">기타</div>
+            <div class="btn compact" data-relation="manual">직접 입력</div>
+          </div>
         </div>
         <input id="relationManual" type="text" placeholder="관계 입력 (예: 회사, 대학동기)" autocomplete="off" hidden>
       </div>
@@ -476,15 +465,17 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   const depositorWrap = $('depositorWrap'), depositorInput = $('depositor');
   const transferTile = $('transferTile');
   const manualBtn = $('manualBtn'), manualWrap = $('manualAmountWrap'), manualInput = $('manualAmount');
-  const relationValueEl = $('relationValue'), relationEditBtn = $('relationEditBtn'), relationManualInput = $('relationManual');
+  const relationManualInput = $('relationManual');
   const submitBtn = $('submitBtn');
 
-  // 관계는 평소엔 '기타'로 고정이고, 필요할 때만 직접 입력 버튼으로 입력칸을 연다
-  relationEditBtn.addEventListener('click', () => {
-    const opening = relationManualInput.hidden;
-    relationManualInput.hidden = !opening;
-    if (opening) {
-      relationEditBtn.textContent = '기타로 되돌리기';
+  // 관계는 '기타'가 눌린 채로 시작하고, 직접 입력 버튼을 눌렀을 때만 입력칸을 연다
+  $('relationGrid').addEventListener('click', e => {
+    const t = e.target.closest('.btn');
+    if (!t) return;
+    if (t.dataset.relation === 'manual') {
+      selectIn($('relationGrid'), t, 'selected');
+      relationManualInput.hidden = false;
+      relation = relationManualInput.value.trim() || DEFAULT_RELATION;
       relationManualInput.focus();
     } else {
       resetRelation();
@@ -492,15 +483,13 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbz6quzjAyNoQsKzE_4wuBlb
   });
   relationManualInput.addEventListener('input', () => {
     relation = relationManualInput.value.trim() || DEFAULT_RELATION;
-    relationValueEl.textContent = relation;
   });
 
   function resetRelation() {
     relation = DEFAULT_RELATION;
-    relationValueEl.textContent = relation;
     relationManualInput.value = '';
     relationManualInput.hidden = true;
-    relationEditBtn.textContent = '직접 입력';
+    selectIn($('relationGrid'), document.querySelector('#relationGrid [data-relation="기타"]'), 'selected');
   }
 
   receiverEl.addEventListener('input', () => localStorage.setItem('receiver_' + SIDE, receiverEl.value));
